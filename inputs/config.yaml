@@ -1,0 +1,23 @@
+scene:
+  image_settings:
+    width: 800
+    height: 600
+    background_color: [100, 0, 44] # White
+
+  objects:
+    main_triangle:
+      type: triangle
+      vertices:
+        - [222, 100]
+        - [467, 200]
+        - [422, 500]
+      colors:
+        - [255, 0, 0]
+        - [0, 255, 0] 
+        - [0, 0, 255] 
+
+    test_circle:
+      type: circle
+      center: [250, 250]
+      radius: 100
+      color: [255, 255, 255]
