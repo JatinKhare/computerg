@@ -2,7 +2,7 @@ scene:
   image_settings:
     width: 800
     height: 600
-    background_color: [100, 0, 44] # White
+    background_color: [0, 0, 0] # Black
 
   objects:
     main_triangle:
@@ -18,6 +18,12 @@ scene:
 
     test_circle:
       type: circle
-      center: [250, 250]
-      radius: 100
+      center: [400, 300]
+      radius: 200
+      color: [255, 255, 255]
+    
+    line:
+      type: line
+      start: [100, 100]
+      end: [700, 500]
       color: [255, 255, 255]

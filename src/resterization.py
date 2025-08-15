@@ -25,8 +25,6 @@ def edge_function(A, B, C):
 # This is the main function to draw and rasterize the triangle.
 # It takes the three vertices and a Pillow ImageDraw object as input.
 def draw_triangle(A, B, C, colourA, colourB, colourC, draw_context):
-    # Calculate the edge function for the entire triangle (ABC).
-    # This value represents the total area of the triangle and is used for normalization.
     ABC = edge_function(A, B, C)
 
     # Our "back-face culling" trick: if the area is negative, the vertices are
@@ -95,64 +93,60 @@ def draw_line(x0, y0, x1, y1, colour, draw_context):
             err += dx
             y0 += sy
 
-def draw_circle_wrong(centre, radius, colour, draw_context):
+def draw_circle_wrong(centre, radius, colour, draw_context, fill=False):
     """
     Rasterises a circle line with center (x0, y0) radius r
     """
-    # x = x0 - rad
-    # while (x <= x0 + rad):
-    #     y_pos = np.sqrt(rad**2 - (x - x0)**2) + y0
-    #     y_neg = -np.sqrt(rad**2 - (x - x0)**2) + y0
-    #     angle_pos = np.arctan(y_pos/x)
-    #     if(angle_pos<np.pi/3):
-    #         r = colourA.r * ((y_neg - y0)**2 + (x - x0)**2)/rad**2
-    #     g = 0
-    #     b = 0
-    #     colourP = Colour(r, g, b)
-    #     draw_context.point((x, y_pos), fill=(colourP.r, colourP.g, colourP.b))
-    #     draw_context.point((x, y_neg), fill=(colourP.r, colourP.g, colourP.b))
-    #     x+=1
     x0 = centre.x
     y0 = centre.y
     x = x0 - radius
-    while(x <= x0 + radius):
+    while (x <= x0 + radius):
         y_pos = np.sqrt(radius**2 - (x - x0)**2) + y0
         y_neg = y0 - np.sqrt(radius**2 - (x - x0)**2)
-
-        angle_pos = np.arctan(y_pos/x)
-        angle_neg = np.arctan(y_neg/x)
-        colourP = Colour(255*angle_pos, 255*(np.pi/2 - angle_pos), 255*(np.pi/2 + angle_pos))
-        for y in range (y0, int(y_pos)):
-            draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
-        for y in range (int(y_neg), y0):
-            draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
+        draw_context.point((x, y_pos))
+        draw_context.point((x, y_neg))
         x+=1
+    
+    if(fill):
+        x = x0 - radius
+        while(x <= x0 + radius):
+            y_pos = np.sqrt(radius**2 - (x - x0)**2) + y0
+            y_neg = y0 - np.sqrt(radius**2 - (x - x0)**2)
 
-# Main execution block
-if __name__ == "__main__":
-    # Create our vertex colours
-    colourA = Colour(255, 0, 0)  # Red
-    colourB = Colour(0, 255, 0)  # Green
-    colourC = Colour(0, 0, 255)  # Blue
+            angle_pos = np.arctan(y_pos/x)
+            angle_neg = np.arctan(y_neg/x)
+            colourP = Colour(255*angle_pos, 255*(np.pi/2 - angle_pos), 255*(np.pi/2 + angle_pos))
+            for y in range (y0, int(y_pos)):
+                draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
+            for y in range (int(y_neg), y0):
+                draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
+            x+=1
 
-    # Set up our image canvas
-    image_width = 800
-    image_height = 600
-    # Create a new RGB image with a black background
-    image = Image.new("RGB", (image_width, image_height), "black")
-    # Get a drawing context for the image
-    draw = ImageDraw.Draw(image)
 
-    vertexA1 = Point(222, 100)
-    vertexB1 = Point(467, 200)
-    vertexC1 = Point(422, 500)
-    draw_triangle(vertexA1, vertexB1, vertexC1, colourA, colourB, colourC, draw)
 
-    white = Colour(255, 255, 255)
-    #draw_line(0, 0, 60, 200, white, draw)
+def draw_circle_right(centre, radius, colour, draw_context, fill=False):
+    xc = centre.x
+    yc = centre.y
+    x, y = 0, radius
+    p = 1 - radius
+    while x <= y:
+        # 8 symmetric points
+        points = [
+            (xc + x, yc + y),
+            (xc - x, yc + y),
+            (xc + x, yc - y),
+            (xc - x, yc - y),
+            (xc + y, yc + x),
+            (xc - y, yc + x),
+            (xc + y, yc - x),
+            (xc - y, yc - x),
+        ]
+        for px, py in points:
+            draw_context.point((px, py))
 
-    draw_circle_wrong(250, 250, 100, draw)
-
-    print("Triangle saved to triangle.png")
-
-    image.show()
+        if p < 0:
+            p += 2*x + 3
+        else:
+            p += 2*(x - y) + 5
+            y -= 1
+        x += 1

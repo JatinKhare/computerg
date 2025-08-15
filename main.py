@@ -3,7 +3,7 @@ import sys
 from PIL import Image, ImageDraw
 import argparse
 
-from src.resterization import Point, Colour, draw_triangle, draw_circle_wrong
+from src.resterization import Point, Colour, draw_triangle, draw_circle_wrong, draw_circle_right, draw_line
 from src.helper import create_directories, load_config
 
 DIRECTORIES_TO_CREATE = [
@@ -41,13 +41,18 @@ def render_scene(config, objects_to_render=None):
         elif obj['type'] == 'circle':
             center = Point(obj['center'][0], obj['center'][1])
             radius = obj['radius']
-            draw_circle_wrong(center, radius, obj['color'], draw)
+            #draw_circle_wrong(center, radius, obj['color'], draw)
+            draw_circle_right(center, radius, obj['color'], draw)
+        elif obj['type'] == 'line':
+            start = Point(obj['start'][0], obj['start'][1])
+            end = Point(obj['end'][0], obj['end'][1])
+            color = Colour(obj['color'][0], obj['color'][1], obj['color'][2])
+            draw_line(start.x, start.y, end.x, end.y, color, draw)
 
     output_path = os.path.join("outputs", "rendered_scene.png")
     image.save(output_path)
     print(f"Scene saved to {output_path}")
     image.show()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render a scene from a config file.")
