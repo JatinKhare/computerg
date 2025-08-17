@@ -24,14 +24,11 @@ def edge_function(A, B, C):
 
 # This is the main function to draw and rasterize the triangle.
 # It takes the three vertices and a Pillow ImageDraw object as input.
-def draw_triangle(A, B, C, colourA, colourB, colourC, draw_context):
+def draw_triangle(A, B, C, colour, draw_context):
     ABC = edge_function(A, B, C)
 
-    # Our "back-face culling" trick: if the area is negative, the vertices are
-    # ordered clockwise. We can skip drawing it, which is an optimization in 3D.
-    if ABC < 0:
-        print("Warning: Skipping a back-facing triangle.")
-        return
+    # Check if the triangle is clockwise or counter-clockwise
+    is_clockwise = ABC < 0
 
     # Get the bounding box of the triangle to reduce the number of pixels to check.
     minX = min(A.x, B.x, C.x)
@@ -49,26 +46,64 @@ def draw_triangle(A, B, C, colourA, colourB, colourC, draw_context):
             BCP = edge_function(B, C, P)
             CAP = edge_function(C, A, P)
 
-            # Normalise the edge functions to get the barycentric coordinates (weights).
-            # These weights tell us how much each vertex's color contributes to the pixel's color.
-            weightA = BCP / ABC
-            weightB = CAP / ABC
-            weightC = ABP / ABC
-
             # Check if the point is inside the triangle.
-            # If all edge functions are non-negative, the point is inside or on an edge.
-            if ABP >= 0 and BCP >= 0 and CAP >= 0:
-                # Interpolate the colours at point P using the barycentric coordinates.
-                r = colourA.r * weightA + colourB.r * weightB + colourC.r * weightC
-                g = colourA.g * weightA + colourB.g * weightB + colourC.g * weightC
-                b = colourA.b * weightA + colourB.b * weightB + colourC.b * weightC
-                colourP = Colour(r, g, b)
+            if is_clockwise:
+                if ABP <= 0 and BCP <= 0 and CAP <= 0:
+                    draw_context.point((P.x, P.y), fill=(colour.r, colour.g, colour.b))
+            else:
+                if ABP >= 0 and BCP >= 0 and CAP >= 0:
+                    draw_context.point((P.x, P.y), fill=(colour.r, colour.g, colour.b))
 
-                # Draw the pixel on the canvas using the interpolated color.
-                # Pillow's point function expects a tuple for color (r, g, b).
-                draw_context.point((P.x, P.y), fill=(colourP.r, colourP.g, colourP.b))
 
-def draw_line(x0, y0, x1, y1, colour, draw_context):
+def draw_line_float_long(x0, y0, x1, y1, colour, draw_context):
+    """
+    Rasterises a straight line between (x0, y0) and (x1, y1)
+    """
+    dx = x1 - x0
+    dy = -(y1 - y0)
+    x = x0
+    y = y0
+    print(dx, dy)
+
+    if((dx>=0) and (dy>=0)):
+        while(x <= x1 and y >= y1):
+            x = x + np.sign(dx)*1
+            y = y - dy/dx
+            draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
+    elif ((dx<=0) and (dy>=0)):
+        while(x >= x1 and y >= y1):
+            x = x + np.sign(dx)*1
+            y = y + dy/dx
+            draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
+    elif ((dx<=0) and (dy<=0)):
+        while(x >= x1 and y <= y1):
+            x = x + np.sign(dx)*1
+            y = y + dy/dx
+            draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
+    elif ((dx>=0) and (dy<=0)):
+        while(x <= x1 and y <= y1):
+            x = x + np.sign(dx)*1
+            y = y - dy/dx
+            draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
+
+
+def draw_line_float_simple(x0, y0, x1, y1, colour, draw_context):
+    dx = x1 - x0
+    dy = y1 - y0
+
+    steps = int(max(abs(dx), abs(dy)))
+
+    x_inc = dx / steps
+    y_inc = dy / steps
+
+    x, y = x0, y0
+    for _ in range(steps + 1):
+        draw_context.point((round(x), round(y)), fill=(colour.r, colour.g, colour.b))
+        x += x_inc
+        y += y_inc 
+
+
+def draw_line_int(x0, y0, x1, y1, colour, draw_context):
     """
     Rasterises a straight line between (x0, y0) and (x1, y1)
     using Bresenham's algorithm.
@@ -93,7 +128,7 @@ def draw_line(x0, y0, x1, y1, colour, draw_context):
             err += dx
             y0 += sy
 
-def draw_circle_wrong(centre, radius, colour, draw_context, fill=False):
+def draw_circle_float(centre, radius, colour, draw_context, fill=False):
     """
     Rasterises a circle line with center (x0, y0) radius r
     """
@@ -103,10 +138,10 @@ def draw_circle_wrong(centre, radius, colour, draw_context, fill=False):
     while (x <= x0 + radius):
         y_pos = np.sqrt(radius**2 - (x - x0)**2) + y0
         y_neg = y0 - np.sqrt(radius**2 - (x - x0)**2)
-        draw_context.point((x, y_pos))
-        draw_context.point((x, y_neg))
+        draw_context.point((x, y_pos), fill=(colour.r, colour.g, colour.b))
+        draw_context.point((x, y_neg), fill=(colour.r, colour.g, colour.b))
         x+=1
-    
+
     if(fill):
         x = x0 - radius
         while(x <= x0 + radius):
@@ -114,17 +149,16 @@ def draw_circle_wrong(centre, radius, colour, draw_context, fill=False):
             y_neg = y0 - np.sqrt(radius**2 - (x - x0)**2)
 
             angle_pos = np.arctan(y_pos/x)
-            angle_neg = np.arctan(y_neg/x)
-            colourP = Colour(255*angle_pos, 255*(np.pi/2 - angle_pos), 255*(np.pi/2 + angle_pos))
-            for y in range (y0, int(y_pos)):
-                draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
-            for y in range (int(y_neg), y0):
-                draw_context.point((x, y), fill=(colourP.r, colourP.g, colourP.b))
+            #colourP = Colour(255*angle_pos, 255*(np.pi/2 - angle_pos), 255*(np.pi/2 + angle_pos))
+            for y in range (int(y0), int(y_pos)):
+                draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
+            for y in range (int(y_neg), int(y0)):
+                draw_context.point((x, y), fill=(colour.r, colour.g, colour.b))
             x+=1
 
 
 
-def draw_circle_right(centre, radius, colour, draw_context, fill=False):
+def draw_circle_int(centre, radius, colour, draw_context, fill=False):
     xc = centre.x
     yc = centre.y
     x, y = 0, radius
@@ -142,7 +176,7 @@ def draw_circle_right(centre, radius, colour, draw_context, fill=False):
             (xc - y, yc - x),
         ]
         for px, py in points:
-            draw_context.point((px, py))
+            draw_context.point((px, py), fill=(colour.r, colour.g, colour.b))
 
         if p < 0:
             p += 2*x + 3
@@ -150,3 +184,9 @@ def draw_circle_right(centre, radius, colour, draw_context, fill=False):
             p += 2*(x - y) + 5
             y -= 1
         x += 1
+
+    if fill:
+        for y_fill in range(int(yc - radius), int(yc + radius) + 1):
+            for x_fill in range(int(xc - radius), int(xc + radius) + 1):
+                if (x_fill - xc)**2 + (y_fill - yc)**2 <= radius**2:
+                    draw_context.point((x_fill, y_fill), fill=(colour.r, colour.g, colour.b))

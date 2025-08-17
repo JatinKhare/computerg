@@ -1,29 +1,68 @@
 scene:
   image_settings:
-    width: 800
-    height: 600
-    background_color: [0, 0, 0] # Black
+    width: 2000
+    height: 1200
+    background_color: [255, 255, 255] # White
 
   objects:
+    
     main_triangle:
       type: triangle
       vertices:
-        - [222, 100]
+        - [-222, 100]
         - [467, 200]
-        - [422, 500]
-      colors:
-        - [255, 0, 0]
-        - [0, 255, 0] 
-        - [0, 0, 255] 
+        - [422, -500]
+      color: [255, 0, 0]
 
-    test_circle:
+    test_circleQ1:
       type: circle
-      center: [400, 300]
-      radius: 200
-      color: [255, 255, 255]
-    
-    line:
+      center: [300, 200]
+      radius: 150
+      color: [0, 0, 0]
+
+    test_circleQ2:
+      type: circle
+      center: [300, -200]
+      radius: 150
+      color: [0, 0, 0]
+    test_circleQ3:
+      type: circle
+      center: [-300, -200]
+      radius: 150
+      color: [0, 0, 0]
+    test_circleQ4:
+      type: circle
+      center: [-300, 200]
+      radius: 150
+      color: [0, 0, 0]
+
+
+    test_lineQ1:
       type: line
-      start: [100, 100]
-      end: [700, 500]
-      color: [255, 255, 255]
+      start: [100, 50]
+      end: [500, 200]
+      color: [0, 0, 0]
+
+    test_lineQ2:
+      type: line
+      start: [-100, 50]
+      end: [-500, 200]
+      color: [0, 0, 0]
+
+    test_lineQ3:
+      type: line
+      start: [-100, -50]
+      end: [-500, -200]
+      color: [0, 0, 0]
+
+    test_lineQ4:
+      type: line
+      start: [100, -50]
+      end: [500, -200]
+      color: [0, 0, 0]
+ 
+    test_line_3_2:
+      type: line
+      start: [-50, -200]
+      end: [500, 200]
+      color: [0, 0, 255]
