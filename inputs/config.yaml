@@ -2,67 +2,109 @@ scene:
   image_settings:
     width: 2000
     height: 1200
-    background_color: [255, 255, 255] # White
+    background_color: [255, 255, 255]
+
+  camera:
+    type: 2d_orthographic
+    # Future properties like position, orientation, and zoom will go here.
+
+  renderer:
+    type: rasterization
+    options:
+      shading: none # Options could be 'none', 'flat', 'gouraud', 'phong'
+
+  lights:
+    - type: ambient
+      color: [255, 255, 255]
+      intensity: 0.2
+    - type: point
+      color: [255, 255, 255]
+      intensity: 0.8
+      position: [0, 0, 500] # 3D position for future use
+
+  materials:
+    black_plastic:
+      color: [0, 0, 0]
+    red_plastic:
+      color: [255, 0, 0]
+    blue_plastic:
+      color: [0, 0, 255]
+    yellow_plastic:
+      color: [255, 255, 0]
+    green_plastic:
+      color: [0, 255, 0]
+      # Future properties for shading
+      # ambient: [0.1, 0.1, 0.1]
+      # diffuse: [0.7, 0.7, 0.7]
+      # specular: [0.2, 0.2, 0.2]
+      # shininess: 32
 
   objects:
-    
-    main_triangle:
-      type: triangle
-      vertices:
-        - [-222, 100]
-        - [467, 200]
-        - [422, -500]
-      color: [255, 0, 0]
 
-    test_circleQ1:
+    - name: test_circle_q1
       type: circle
+      material: black_plastic
       center: [300, 200]
-      radius: 150
-      color: [0, 0, 0]
+      radius: 100
+      transformations: []
 
-    test_circleQ2:
+    - name: test_circle_q2
       type: circle
+      material: black_plastic
       center: [300, -200]
-      radius: 150
-      color: [0, 0, 0]
-    test_circleQ3:
+      radius: 100
+      transformations: []
+
+    - name: test_circle_q3
       type: circle
+      material: black_plastic
       center: [-300, -200]
-      radius: 150
-      color: [0, 0, 0]
-    test_circleQ4:
+      radius: 100
+      transformations: []
+
+    - name: test_circle_q4
       type: circle
+      material: black_plastic
       center: [-300, 200]
-      radius: 150
-      color: [0, 0, 0]
-
-
-    test_lineQ1:
+      radius: 100
+      transformations: []
+      
+    - name: test_line_q1
       type: line
+      material: black_plastic
       start: [100, 50]
       end: [500, 200]
-      color: [0, 0, 0]
 
-    test_lineQ2:
+    - name: test_line_q2
       type: line
+      material: black_plastic
       start: [-100, 50]
       end: [-500, 200]
-      color: [0, 0, 0]
 
-    test_lineQ3:
+    - name: test_line_q3
       type: line
+      material: black_plastic
       start: [-100, -50]
       end: [-500, -200]
-      color: [0, 0, 0]
 
-    test_lineQ4:
+    - name: test_line_q4
       type: line
+      material: black_plastic
       start: [100, -50]
       end: [500, -200]
-      color: [0, 0, 0]
- 
-    test_line_3_2:
+
+    - name: test_line_q3_q2 
       type: line
+      material: black_plastic
       start: [-50, -200]
       end: [500, 200]
-      color: [0, 0, 255]
+
+    - name: test_triangle_q1
+      type: triangle
+      material: green_plastic
+      vertices:
+        - [-400, 400]
+        - [400, 400]
+        - [-150, 200]
+      
+
