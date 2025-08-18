@@ -93,18 +93,156 @@ scene:
       start: [100, -50]
       end: [500, -200]
 
-    - name: test_line_q3_q2 
+    - name: test_line_clipping
       type: line
       material: black_plastic
-      start: [-50, -200]
-      end: [500, 200]
+      start: [-500, 200]
+      end: [-1500, 400]
 
-    - name: test_triangle_q1
+    - name: test_triangle
       type: triangle
-      material: green_plastic
+      material: black_plastic
       vertices:
-        - [-400, 400]
-        - [400, 400]
-        - [-150, 200]
-      
+        - [-50, -50]
+        - [50, -50]
+        - [0, 50]
 
+    - name: test_polygon
+      type: polygon
+      material: red_plastic
+      vertices:
+        - [100, 100]
+        - [200, 100]
+        - [250, 200]
+        - [150, 300]
+        - [50, 200]
+
+    - name: test_triangle_clipping
+      type: triangle
+      material: red_plastic
+      vertices:
+        - [500, 300]
+        - [1500, 300]
+        - [950, 550]
+
+    - name: transformed_triangle
+      type: triangle
+      material: blue_plastic
+      vertices:
+        - [-50, -50]
+        - [50, -50]
+        - [0, 50]
+      transform:
+        - type: scale
+          factor: [1,5]
+        - type: rotate
+          angle: 90
+        - type: translate
+          offset: [0, -500]
+
+    - name: my_3d_cube
+      type: cube_3d
+      material: black_plastic
+      center: [0, 0, 0] # Center of the cube in 3D space
+      size: 100 # Side length of the cube
+      transform:
+        - type: rotate_x
+          angle: 0
+        - type: rotate_y
+          angle: 0
+        - type: translate_3d
+          offset: [-800, 0, 0]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
+
+    - name: my_3d_cube_x
+      type: cube_3d
+      material: black_plastic
+      center: [0, 0, 0] # Center of the cube in 3D space
+      size: 100 # Side length of the cube
+      transform:
+        - type: rotate_x
+          angle: 30
+        - type: rotate_y
+          angle: 0
+        - type: rotate_z
+          angle: 0
+        - type: translate_3d
+          offset: [-400, 0, 0] 
+        
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
+    - name: my_3d_cube_y
+      type: cube_3d
+      material: black_plastic
+      center: [0, 0, 0] # Center of the cube in 3D space
+      size: 100 # Side length of the cube
+      transform:
+        - type: rotate_x
+          angle: 0
+        - type: rotate_y
+          angle: 30
+        - type: rotate_z
+          angle: 0
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
+    - name: my_3d_cube_z
+      type: cube_3d
+      material: black_plastic
+      center: [0, 0, 0] # Center of the cube in 3D space
+      size: 100 # Side length of the cube
+      transform:
+        - type: rotate_x
+          angle: 0
+        - type: rotate_y
+          angle: 0
+        - type: rotate_z
+          angle: 30
+        - type: translate_3d
+          offset: [400, 0, 0]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
