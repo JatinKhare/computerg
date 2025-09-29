@@ -11,6 +11,8 @@ from src.raster.circle import *
 from src.raster.line import *
 from src.raster.polygon import *
 from src.transform import *
+from src.raster.raster_help import *
+from src.camera import Camera
 
 DIRECTORIES_TO_CREATE = ["src", "inputs", "outputs"]
 
@@ -25,6 +27,20 @@ class Scene:
         self.settings = scene_data['image_settings']
         self.materials = scene_data['materials']
         self.objects = scene_data['objects']
+        
+        cam_config = scene_data['camera']
+        self.camera_type = cam_config['type']
+        aspect_ratio = self.settings['width'] / self.settings['height']
+        self.camera = Camera(
+            position=cam_config['position'],
+            target=cam_config['target'],
+            up=cam_config['up'],
+            fov=cam_config.get('fov', 60),
+            aspect_ratio=aspect_ratio,
+            near=cam_config['near'],
+            far=cam_config['far'],
+            ortho_bounds=cam_config.get('ortho_bounds')
+        )
 
     def get_render_list(self, objects_to_render):
         if objects_to_render:
@@ -41,6 +57,10 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
     canvas.draw_quadrant_boundaries()
 
     render_list = scene.get_render_list(objects_to_render)
+
+    view_matrix = scene.camera.get_view_matrix()
+    projection_matrix = scene.camera.get_projection_matrix(scene.camera_type)
+    view_projection_matrix = np.dot(projection_matrix, view_matrix)
 
     y_offset = 10
     for obj in render_list:
@@ -113,8 +133,8 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                 transformed_vertices.append([transformed_v[0], transformed_v[1]])
                 
             verts = [Point(*canvas.world_to_screen(v[0], v[1])) for v in transformed_vertices]
-            draw_polygon(verts, color, canvas.draw, fill=True)
-            
+            draw_polygon(verts, color, canvas.draw)
+            scanline_fill(verts, color, canvas.draw)
         elif obj['type'] == 'cube_3d':
             center = obj['center']
             size = obj['size']
@@ -131,7 +151,7 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                 np.array([center[0] - s, center[1] + s, center[2] + s, 1]),
             ]
 
-            final_transform_matrix_3d = np.identity(4)
+            model_matrix = np.identity(4)
             if 'transform' in obj:
                 for t in reversed(obj['transform']):
                     if t['type'] == 'translate_3d':
@@ -144,15 +164,22 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                         m = create_3d_rotation_matrix_z(t['angle'])
                     elif t['type'] == 'scale_3d':
                         m = create_3d_scaling_matrix(*t['factor'])
-                    final_transform_matrix_3d = np.dot(final_transform_matrix_3d, m)
+                    model_matrix = np.dot(model_matrix, m)
             
-            transformed_vertices_3d = [np.dot(final_transform_matrix_3d, v) for v in vertices_3d]
+            mvp_matrix = np.dot(view_projection_matrix, model_matrix)
+            
+            transformed_vertices_3d = [np.dot(mvp_matrix, v) for v in vertices_3d]
 
             projected_vertices = []
             for v in transformed_vertices_3d:
-                screen_x = v[0] + v[2] * 0.5
-                screen_y = v[1] - v[2] * 0.5
-                projected_vertices.append(Point(*canvas.world_to_screen(screen_x, screen_y)))
+                # Perspective divide (convert from homogeneous to Cartesian coordinates)
+                if v[3] != 0:
+                    v /= v[3]
+                
+                # Map from Normalized Device Coordinates (NDC) to screen coordinates
+                screen_x = (v[0] + 1) * 0.5 * width
+                screen_y = (1 - v[1]) * 0.5 * height # Y is inverted in screen space
+                projected_vertices.append(Point(int(screen_x), int(screen_y)))
             
             for edge in obj['edges']:
                 p1 = projected_vertices[edge[0]]

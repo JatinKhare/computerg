@@ -13,7 +13,7 @@ def scanline_fill(polygon, color, draw_context):
         polygon[i] = (int(polygon[i].x), int(polygon[i].y))
     ymin = min(y for _, y in polygon)
     ymax = max(y for _, y in polygon)
-
+    print(ymin, ymax)
     # For each scanline
     for y in range(ymin, ymax+1):
         intersections = []
@@ -32,4 +32,6 @@ def scanline_fill(polygon, color, draw_context):
         for i in range(0, len(intersections), 2):
             x_start = intersections[i]
             x_end = intersections[i+1]
+            if(y==300):
+                print(x_start, x_end)
             draw_line_bresenham(x_start, y, x_end, y, color, draw_context)

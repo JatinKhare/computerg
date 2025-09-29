@@ -5,13 +5,28 @@ scene:
     background_color: [255, 255, 255]
 
   camera:
-    type: 2d_orthographic
-    # Future properties like position, orientation, and zoom will go here.
+    # To see the difference between projections, switch the type below.
+    # 'perspective': Objects farther away appear smaller (realistic).
+    # 'orthographic': All objects appear at their actual size regardless of depth.
+    type: 'perspective'
+    position: [150, 0, 500]  # Moved camera back for a clear view
+    target: [0, 0, 0]    # Point the camera is looking at
+    up: [0, 1, 0]        # Up direction for the camera
+
+    # Perspective-specific settings
+    fov: 60
+
+    # Orthographic-specific settings (defines the viewing box in world units)
+    ortho_bounds: [-500, 500, -500, 500] # [left, right, bottom, top]
+
+    # Clipping planes (used by both projections)
+    near: 0.1
+    far: 100
 
   renderer:
     type: rasterization
     options:
-      shading: none # Options could be 'none', 'flat', 'gouraud', 'phong'
+      shading: 'flat' # Options could be 'none', 'flat', 'gouraud', 'phong'
 
   lights:
     - type: ambient
@@ -111,11 +126,22 @@ scene:
       type: polygon
       material: red_plastic
       vertices:
-        - [100, 100]
+        - [100, 125]
         - [200, 100]
         - [250, 200]
         - [150, 300]
         - [50, 200]
+
+    - name: test_polygon_corner
+      type: polygon
+      material: red_plastic
+      vertices:
+        - [75, 300]
+        - [100, 100]
+        - [300, 100]
+        - [325, 300]
+        - [200, 150]
+        - [75, 300]
 
     - name: test_triangle_clipping
       type: triangle
@@ -198,7 +224,7 @@ scene:
       type: cube_3d
       material: black_plastic
       center: [0, 0, 0] # Center of the cube in 3D space
-      size: 100 # Side length of the cube
+      size: 5 # Side length of the cube
       transform:
         - type: rotate_x
           angle: 0
@@ -233,6 +259,52 @@ scene:
           angle: 30
         - type: translate_3d
           offset: [400, 0, 0]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
+
+    - name: my_3d_cube_near
+      type: cube_3d
+      material: blue_plastic
+      center: [0, 0, 0] # Moved to the left
+      size: 200
+      transform:
+        - type: rotate_y
+          angle: 45
+        - type: rotate_z
+          angle: 45
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 0] # Back face
+        - [4, 5]
+        - [5, 6]
+        - [6, 7]
+        - [7, 4] # Front face
+        - [0, 4]
+        - [1, 5]
+        - [2, 6]
+        - [3, 7] # Connecting edges
+
+    - name: my_3d_cube_far
+      type: cube_3d
+      material: green_plastic
+      center: [-400, 0, 200] # Moved to the right and farther back
+      size: 200 # Same size
+      transform:
+        - type: rotate_y
+          angle: 30
       edges:
         - [0, 1]
         - [1, 2]

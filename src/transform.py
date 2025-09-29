@@ -82,3 +82,24 @@ def create_3d_rotation_matrix_z(angle_degrees):
         [0, 0, 1, 0],
         [0, 0, 0, 1]
     ])
+
+# --- 3D Projection Matrices ---
+
+def create_orthographic_projection_matrix(left, right, bottom, top, near, far):
+    """Creates a 4x4 orthographic projection matrix."""
+    return np.array([
+        [2 / (right - left), 0, 0, -(right + left) / (right - left)],
+        [0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)],
+        [0, 0, -2 / (far - near), -(far + near) / (far - near)],
+        [0, 0, 0, 1]
+    ])
+
+def create_perspective_projection_matrix(fov, aspect_ratio, near, far):
+    """Creates a 4x4 perspective projection matrix."""
+    f = 1.0 / np.tan(np.radians(fov) / 2)
+    return np.array([
+        [f / aspect_ratio, 0, 0, 0],
+        [0, f, 0, 0],
+        [0, 0, (far + near) / (near - far), (2 * far * near) / (near - far)],
+        [0, 0, -1, 0]
+    ])
