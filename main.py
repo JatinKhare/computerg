@@ -14,6 +14,7 @@ from src.raster.polygon import *
 from src.transform import *
 from src.raster.raster_help import *
 from src.camera import Camera
+from src.geometry import generate_sphere_mesh
 
 Point3D = namedtuple('Point3D', ['x', 'y', 'z'])
 DIRECTORIES_TO_CREATE = ["src", "inputs", "outputs"]
@@ -29,6 +30,7 @@ class Scene:
         self.settings = scene_data['image_settings']
         self.materials = scene_data['materials']
         self.objects = scene_data['objects']
+        self.lights = scene_data.get('lights', []) # Use .get for safety
         
         cam_config = scene_data['camera']
         self.camera_type = cam_config['type']
@@ -63,6 +65,10 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
     view_matrix = scene.camera.get_view_matrix()
     projection_matrix = scene.camera.get_projection_matrix(scene.camera_type)
     view_projection_matrix = np.dot(projection_matrix, view_matrix)
+
+    # Extract light information from the scene
+    ambient_light = next((l for l in scene.lights if l['type'] == 'ambient'), None)
+    directional_light = next((l for l in scene.lights if l['type'] == 'directional'), None)
 
     y_offset = 10
     for obj in render_list:
@@ -135,8 +141,74 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                 transformed_vertices.append([transformed_v[0], transformed_v[1]])
                 
             verts = [Point(*canvas.world_to_screen(v[0], v[1])) for v in transformed_vertices]
-            draw_polygon(verts, color, canvas.draw)
-            scanline_fill(verts, color, canvas.draw)
+            scanline_fill_custom(verts, color, canvas.draw)
+        
+        elif obj['type'] == 'sphere':
+            # 1. Generate the sphere mesh
+            radius = obj.get('radius', 1)
+            sectors = obj.get('sectors', 36)
+            stacks = obj.get('stacks', 18)
+            local_vertices, faces = generate_sphere_mesh(radius, sectors, stacks)
+            
+            # 2. Apply transformations (same as cube)
+            model_matrix = np.identity(4)
+            # Apply a translation for the sphere's center
+            center = obj.get('center', [0, 0, 0])
+            center_translation = create_3d_translation_matrix(*center)
+            model_matrix = np.dot(center_translation, model_matrix)
+
+            if 'transform' in obj:
+                for t in reversed(obj['transform']):
+                    m = np.identity(4)
+                    if t['type'] == 'translate_3d':
+                        m = create_3d_translation_matrix(*t['offset'])
+                    elif t['type'] == 'rotate_x':
+                        m = create_3d_rotation_matrix_x(t['angle'])
+                    elif t['type'] == 'rotate_y':
+                        m = create_3d_rotation_matrix_y(t['angle'])
+                    elif t['type'] == 'rotate_z':
+                        m = create_3d_rotation_matrix_z(t['angle'])
+                    elif t['type'] == 'scale_3d':
+                        m = create_3d_scaling_matrix(*t['factor'])
+                    model_matrix = np.dot(model_matrix, m)
+            
+            mvp_matrix = np.dot(view_projection_matrix, model_matrix)
+            transformed_vertices_3d = [np.dot(mvp_matrix, v) for v in local_vertices]
+
+            projected_vertices = []
+            for v in transformed_vertices_3d:
+                depth_z = v[2]
+                if v[3] != 0:
+                    v /= v[3]
+                screen_x = (v[0] + 1) * 0.5 * width
+                screen_y = (1 - v[1]) * 0.5 * height
+                projected_vertices.append(Point3D(int(screen_x), int(screen_y), depth_z))
+
+            # 3. Render faces with lighting (same as cube)
+            for face in faces:
+                face_world_verts = [np.dot(model_matrix, local_vertices[i]) for i in face]
+                v0, v1, v2 = face_world_verts[0][:3], face_world_verts[1][:3], face_world_verts[2][:3]
+                normal = np.cross(v1 - v0, v2 - v0)
+                if np.linalg.norm(normal) == 0:
+                    continue
+                normal = normal / np.linalg.norm(normal)
+
+                final_color = color
+                if directional_light:
+                    light_dir = np.array(directional_light['direction'])
+                    light_dir = light_dir / np.linalg.norm(light_dir)
+                    diffuse_intensity = max(0, np.dot(normal, light_dir))
+                    ambient_intensity = ambient_light['intensity'] if ambient_light else 0.1
+                    total_intensity = ambient_intensity + (diffuse_intensity * directional_light.get('intensity', 1.0))
+                    final_color = Colour(
+                        min(255, color.r * total_intensity),
+                        min(255, color.g * total_intensity),
+                        min(255, color.b * total_intensity)
+                    )
+
+                face_vertices = [projected_vertices[i] for i in face]
+                scanline_fill(face_vertices, final_color, canvas.draw, canvas.z_buffer)
+
         elif obj['type'] == 'cube_3d':
             center = obj['center']
             size = obj['size']
@@ -186,11 +258,39 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                 screen_y = (1 - v[1]) * 0.5 * height # Y is inverted in screen space
                 projected_vertices.append(Point3D(int(screen_x), int(screen_y), depth_z))
             
-            # 1. Fill the faces (with Z-buffering)
+            # 1. Fill the faces (with Z-buffering and shading)
             if 'faces' in obj:
                 for face in obj['faces']:
+                    # Get the vertices of the face in world space (before projection)
+                    face_world_verts = [np.dot(model_matrix, vertices_3d[i]) for i in face]
+
+                    # Calculate the face normal in world space
+                    v0, v1, v2 = face_world_verts[0][:3], face_world_verts[1][:3], face_world_verts[2][:3]
+                    normal = np.cross(v1 - v0, v2 - v0)
+                    normal = normal / np.linalg.norm(normal)
+
+                    # --- Lighting Calculation ---
+                    final_color = color
+                    if directional_light:
+                        light_dir = np.array(directional_light['direction'])
+                        light_dir = light_dir / np.linalg.norm(light_dir)
+                        
+                        # Calculate diffuse intensity (dot product)
+                        diffuse_intensity = max(0, np.dot(normal, light_dir))
+                        
+                        # Combine with ambient light
+                        ambient_intensity = ambient_light['intensity'] if ambient_light else 0.1
+                        total_intensity = ambient_intensity + (diffuse_intensity * directional_light.get('intensity', 1.0))
+                        
+                        # Apply to the material color
+                        final_color = Colour(
+                            min(255, color.r * total_intensity),
+                            min(255, color.g * total_intensity),
+                            min(255, color.b * total_intensity)
+                        )
+
                     face_vertices = [projected_vertices[i] for i in face]
-                    scanline_fill(face_vertices, color, canvas.draw, canvas.z_buffer)
+                    scanline_fill(face_vertices, final_color, canvas.draw, canvas.z_buffer)
 
             # 2. Draw the edges on top
             if 'edges' in obj and 'edge_color' in obj:

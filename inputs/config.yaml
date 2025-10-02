@@ -9,7 +9,7 @@ scene:
     # 'perspective': Objects farther away appear smaller (realistic).
     # 'orthographic': All objects appear at their actual size regardless of depth.
     type: 'perspective'
-    position: [0, 0, 25]  
+    position: [0, -50, -250]  
     target: [0, 0, 0]    # Point the camera is looking at
     up: [0, 1, 0]        # Up direction for the camera
 
@@ -29,13 +29,13 @@ scene:
       shading: 'flat' # Options could be 'none', 'flat', 'gouraud', 'phong'
 
   lights:
-    - type: ambient
-      color: [255, 255, 255]
-      intensity: 0.2
-    - type: point
+    - type: directional
+      direction: [-1, 0, 0] # A vector pointing from the light towards the origin
       color: [255, 255, 255]
       intensity: 0.8
-      position: [0, 0, 500] # 3D position for future use
+    - type: ambient
+      color: [255, 255, 255]
+      intensity: 0.5
 
   materials:
     black_plastic:
@@ -334,3 +334,15 @@ scene:
         - [1, 5]
         - [2, 6]
         - [3, 7]
+
+    - name: test_sphere
+      type: sphere
+      material: red_plastic
+      edge_color: black_plastic
+      center: [-6, 0, -5] # Position in the world
+      radius: 100
+      sectors: 10 # How many segments around
+      stacks: 10  # How many segments top to bottom
+      transform:
+        - type: rotate_y
+          angle: 30
