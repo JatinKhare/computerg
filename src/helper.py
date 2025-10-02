@@ -12,6 +12,10 @@ class Colour:
         self.g = int(g)
         self.b = int(b)
 
+    def to_tuple(self):
+        """Returns the color as an (r, g, b) tuple."""
+        return (self.r, self.g, self.b)
+
 def create_directories(dirs_to_create):
     """Creates the necessary directories for the project."""
     for directory in dirs_to_create:

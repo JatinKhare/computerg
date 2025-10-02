@@ -4,7 +4,8 @@ from src.canvas import Canvas
 
 import numpy as np
 
-def scanline_fill(polygon, color, draw_context):
+
+def scanline_fill_custom(polygon, color, draw_context):
     """
     Fills a polygon using the scanline fill algorithm. 
     """

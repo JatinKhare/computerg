@@ -1,3 +1,4 @@
+import numpy as np
 from PIL import Image, ImageDraw
 
 class Canvas:
@@ -7,6 +8,9 @@ class Canvas:
         self.bg_color = bg_color
         self.image = Image.new("RGB", (self.width, self.height), self.bg_color)
         self.draw = ImageDraw.Draw(self.image)
+        
+        # Initialize the Z-buffer with a large value (representing infinity)
+        self.z_buffer = np.full((self.width, self.height), np.inf, dtype=np.float32)
 
     def save(self, output_path):
         self.image.save(output_path)

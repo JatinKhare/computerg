@@ -3,6 +3,7 @@ import sys
 from PIL import Image, ImageDraw
 import argparse
 import numpy as np
+from collections import namedtuple
 
 from src.helper import *
 from src.canvas import Canvas
@@ -14,6 +15,7 @@ from src.transform import *
 from src.raster.raster_help import *
 from src.camera import Camera
 
+Point3D = namedtuple('Point3D', ['x', 'y', 'z'])
 DIRECTORIES_TO_CREATE = ["src", "inputs", "outputs"]
 
 class Scene:
@@ -172,6 +174,9 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
 
             projected_vertices = []
             for v in transformed_vertices_3d:
+                # Store the original z value for depth testing
+                depth_z = v[2]
+
                 # Perspective divide (convert from homogeneous to Cartesian coordinates)
                 if v[3] != 0:
                     v /= v[3]
@@ -179,12 +184,28 @@ def render_scene(scene, objects_to_render=None, debug=False, bb=False):
                 # Map from Normalized Device Coordinates (NDC) to screen coordinates
                 screen_x = (v[0] + 1) * 0.5 * width
                 screen_y = (1 - v[1]) * 0.5 * height # Y is inverted in screen space
-                projected_vertices.append(Point(int(screen_x), int(screen_y)))
+                projected_vertices.append(Point3D(int(screen_x), int(screen_y), depth_z))
             
-            for edge in obj['edges']:
-                p1 = projected_vertices[edge[0]]
-                p2 = projected_vertices[edge[1]]
-                draw_line_bresenham(p1.x, p1.y, p2.x, p2.y, color, canvas.draw)
+            # 1. Fill the faces (with Z-buffering)
+            if 'faces' in obj:
+                for face in obj['faces']:
+                    face_vertices = [projected_vertices[i] for i in face]
+                    scanline_fill(face_vertices, color, canvas.draw, canvas.z_buffer)
+
+            # 2. Draw the edges on top
+            if 'edges' in obj and 'edge_color' in obj:
+                try:
+                    edge_material_name = obj['edge_color']
+                    edge_material = scene.materials[edge_material_name]
+                    edge_color = Colour(*edge_material['color'])
+                    
+                    for edge in obj['edges']:
+                        p1 = projected_vertices[edge[0]]
+                        p2 = projected_vertices[edge[1]]
+                        draw_line_bresenham(p1.x, p1.y, p2.x, p2.y, edge_color, canvas.draw)
+                except KeyError:
+                    # Silently fail if edge material is missing
+                    pass
 
     output_path = os.path.join("outputs", "rendered_scene.png")
     canvas.save(output_path)

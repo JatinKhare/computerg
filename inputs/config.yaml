@@ -9,7 +9,7 @@ scene:
     # 'perspective': Objects farther away appear smaller (realistic).
     # 'orthographic': All objects appear at their actual size regardless of depth.
     type: 'perspective'
-    position: [150, 0, 500]  # Moved camera back for a clear view
+    position: [0, 0, 25]  
     target: [0, 0, 0]    # Point the camera is looking at
     up: [0, 1, 0]        # Up direction for the camera
 
@@ -276,45 +276,61 @@ scene:
     - name: my_3d_cube_near
       type: cube_3d
       material: blue_plastic
-      center: [0, 0, 0] # Moved to the left
-      size: 200
+      edge_color: black_plastic # Added for outlines
+      center: [-3, 0, 0]
+      size: 5
       transform:
         - type: rotate_y
-          angle: 45
+          angle: 30
         - type: rotate_z
           angle: 45
-      edges:
+      faces:
+        - [0, 1, 2, 3] # Back face
+        - [4, 5, 6, 7] # Front face
+        - [0, 4, 7, 3] # Left face
+        - [1, 5, 6, 2] # Right face
+        - [3, 2, 6, 7] # Top face
+        - [0, 1, 5, 4] # Bottom face
+      edges: # Added edges back for drawing outlines
         - [0, 1]
         - [1, 2]
         - [2, 3]
-        - [3, 0] # Back face
+        - [3, 0]
         - [4, 5]
         - [5, 6]
         - [6, 7]
-        - [7, 4] # Front face
+        - [7, 4]
         - [0, 4]
         - [1, 5]
         - [2, 6]
-        - [3, 7] # Connecting edges
+        - [3, 7]
 
     - name: my_3d_cube_far
       type: cube_3d
       material: green_plastic
-      center: [-400, 0, 200] # Moved to the right and farther back
-      size: 200 # Same size
+      edge_color: black_plastic # Added for outlines
+      center: [3, 0, -10]
+      size: 5
       transform:
         - type: rotate_y
           angle: 30
-      edges:
+      faces:
+        - [0, 1, 2, 3] # Back face
+        - [4, 5, 6, 7] # Front face
+        - [0, 4, 7, 3] # Left face
+        - [1, 5, 6, 2] # Right face
+        - [3, 2, 6, 7] # Top face
+        - [0, 1, 5, 4] # Bottom face
+      edges: # Added edges back for drawing outlines
         - [0, 1]
         - [1, 2]
         - [2, 3]
-        - [3, 0] # Back face
+        - [3, 0]
         - [4, 5]
         - [5, 6]
         - [6, 7]
-        - [7, 4] # Front face
+        - [7, 4]
         - [0, 4]
         - [1, 5]
         - [2, 6]
-        - [3, 7] # Connecting edges
+        - [3, 7]
